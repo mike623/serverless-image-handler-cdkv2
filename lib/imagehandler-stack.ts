@@ -12,9 +12,11 @@ export interface ImagehandlerStackProps extends cdk.StackProps {
     stageName: string;
     appName: string;
     bucketname: string;
+    lambdaCodePath: string;
 }
 
 export class ImagehandlerStack extends cdk.Stack {
+  cloudfronturl: string;
   constructor(scope: Construct, id: string, props: ImagehandlerStackProps) {
     super(scope, id, props);
 
@@ -33,7 +35,7 @@ export class ImagehandlerStack extends cdk.Stack {
       description: "Serverless Image Handler (v6.0.0): Performs image edits and manipulations",
       runtime: lambda.Runtime.NODEJS_14_X,
       functionName: `lambda-${appName}-${stageName}-cac1-01`,
-      code: lambda.Code.fromAsset('lambda'),
+      code: lambda.Code.fromAsset(props.lambdaCodePath),
       handler: "image-handler/index.handler",
       timeout: Duration.seconds(900),
       architecture: lambda.Architecture.X86_64,
@@ -166,6 +168,7 @@ export class ImagehandlerStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'cloudfronturl', {
       value: `https://${cloudfrontdist.distributionDomainName}`,
     });
+    this.cloudfronturl = `https://${cloudfrontdist.distributionDomainName}`;
 
   }
 }
