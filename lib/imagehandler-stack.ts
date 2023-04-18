@@ -7,16 +7,35 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Duration } from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { Distribution } from 'aws-cdk-lib/aws-cloudfront';
+
+const defaultLambdaEnv = {
+  DEFAULT_FALLBACK_IMAGE_BUCKET: "",
+  ENABLE_DEFAULT_FALLBACK_IMAGE: "No",
+  ENABLE_SIGNATURE: "No",                  // set to "Yes" to enable signature
+  DEFAULT_FALLBACK_IMAGE_KEY: "",
+  SECRET_KEY: "",
+  REWRITE_SUBSTITUTION: "",
+  REWRITE_MATCH_PATTERN: "",
+  SOURCE_BUCKETS: '', // Pass the source buckets name here separated by comma
+  AUTO_WEBP: "No",
+  CORS_ENABLED: "Yes",
+  CORS_ORIGIN: "*",
+  SECRETS_MANAGER: "",
+}
 
 export interface ImagehandlerStackProps extends cdk.StackProps {
     stageName: string;
     appName: string;
     bucketname: string;
     lambdaCodePath: string;
+    lambdaEnv?: Partial<typeof defaultLambdaEnv>;
 }
 
 export class ImagehandlerStack extends cdk.Stack {
   cloudfronturl: string;
+  lambdaFunction: lambda.Function;
+  cfnDistribution: Distribution;
   constructor(scope: Construct, id: string, props: ImagehandlerStackProps) {
     super(scope, id, props);
 
@@ -30,6 +49,12 @@ export class ImagehandlerStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
+    const lambdaEnv: typeof defaultLambdaEnv = {
+      ...defaultLambdaEnv,
+      ...props.lambdaEnv,
+      SOURCE_BUCKETS: `${bucketname}`,
+    }
+
     // image handler lambda function
     const imagehandlerFunction = new lambda.Function(this, 'imagehandlerFunction', {
       description: "Serverless Image Handler (v6.0.0): Performs image edits and manipulations",
@@ -41,21 +66,9 @@ export class ImagehandlerStack extends cdk.Stack {
       architecture: lambda.Architecture.X86_64,
       memorySize: 1024,
       tracing: lambda.Tracing.PASS_THROUGH,
-      environment: {
-        DEFAULT_FALLBACK_IMAGE_BUCKET: "",
-        ENABLE_DEFAULT_FALLBACK_IMAGE: "No",
-        ENABLE_SIGNATURE: "No",                  // set to "Yes" to enable signature
-        DEFAULT_FALLBACK_IMAGE_KEY: "",
-        SECRET_KEY: "",
-        REWRITE_SUBSTITUTION: "",
-        REWRITE_MATCH_PATTERN: "",
-        SOURCE_BUCKETS: `${bucketname}`, // Pass the source buckets name here separated by comma
-        AUTO_WEBP: "No",
-        CORS_ENABLED: "Yes",
-        CORS_ORIGIN: "*",
-        SECRETS_MANAGER: "",
-      },
+      environment: lambdaEnv,
     });
+    this.lambdaFunction = imagehandlerFunction;
 
     // s3 access policy for image handler lambda function
     imagehandlerFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -163,6 +176,7 @@ export class ImagehandlerStack extends cdk.Stack {
           },
         ],
       });
+    this.cfnDistribution = cloudfrontdist;
 
     // outputs
     new cdk.CfnOutput(this, 'cloudfronturl', {
