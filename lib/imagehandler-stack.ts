@@ -126,7 +126,7 @@ export class ImagehandlerStack extends cdk.Stack {
 
     // cloudfront caching policy
     const cachingPolicy = new cloudfront.CachePolicy(this, 'CachingPolicy', {
-        cachePolicyName: 'sih-caching-policy',
+        cachePolicyName: `sih-${appName}-${stageName}-caching-policy`,
         comment: 'Caching policy for imagehandler',
         defaultTtl: Duration.seconds(86400),
         minTtl: Duration.seconds(1),
