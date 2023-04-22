@@ -149,8 +149,8 @@ export class ImagehandlerStack extends cdk.Stack {
         },
         comment: 'Serverless Image handler',
         priceClass: cloudfront.PriceClass.PRICE_CLASS_ALL,
-        enableLogging: true,
-        logBucket: logBucket,
+        // // enableLogging: true,
+        // logBucket: logBucket,
         logFilePrefix: 'imagehandler',
         minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2019,
         errorResponses: [
