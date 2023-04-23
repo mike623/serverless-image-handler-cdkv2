@@ -7,7 +7,7 @@
   "author": "AWS Solutions",
   "main": "image-handler/index.js",
   "scripts": {
-    "prebuild": "npm run clean && npm ci --omit=dev --arch=x64 --platform=linux",
+    "prebuild": "npm run clean && npm install --omit=dev --arch=x64 --platform=linux",
     "build": "tsc --build tsconfig.json",
     "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
     "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
